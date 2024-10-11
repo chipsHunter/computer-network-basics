@@ -1,4 +1,5 @@
 import queue
+import tkinter
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -17,8 +18,8 @@ class MyMainWindow:
         self.output_field = None
         self.combo_box_first = None
         self.combo_box_second = None
-        self.input_label = None
-        self.output_label = None
+        self.transmit_bytes_label = None
+        self.receive_bytes_label = None
 
         self.setup_ui()
 
@@ -38,12 +39,32 @@ class MyMainWindow:
         right_frame = tk.Frame(top_frame, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
         right_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
+        # -----ОКНО СОСТОЯНИЯ---------------------------------------------
         status_frame = tk.Frame(self.root, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
         status_frame.pack(side=tk.TOP, fill=tk.BOTH, padx=10, pady=10)
 
+        transceiver_frame = tk.Frame(status_frame, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
+        transceiver_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=5, pady=5)
+
+        transmit_info = tk.Frame(transceiver_frame, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
+        transmit_info.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        receive_info = tk.Frame(transceiver_frame, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
+        receive_info.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.transmit_bytes_label = tk.Label(transmit_info, text="Отправлено 0 байт", font=("Courier", 14), bg="#FFFFFF")
+        self.transmit_bytes_label.pack(anchor="w", padx=10, pady=5)
+        self.receive_bytes_label = tk.Label(receive_info, text="Принято 0 байт", font=("Courier", 14), bg="#FFFFFF")
+        self.receive_bytes_label.pack(anchor="w", padx=10, pady=5)
+
+        port_info = tk.Label(status_frame, text="Скорость передачи данных: 9600\n8-битный\nЗадержка: 0.5с\n", font=("Courier", 14), bg="#FFFFFF", justify=tkinter.LEFT)
+        port_info.pack(side=tk.BOTTOM, padx=10, pady=5)
+
+        # ------------------------------------------------------------------
+
         # Окно ввода (левая часть)
-        self.input_label = tk.Label(left_frame, text="Окно ввода: принято 0 байт", font=("Courier", 14), bg="#FFFFFF")
-        self.input_label.pack(anchor="w", padx=10, pady=5)
+        input_label = tk.Label(left_frame, text="Окно ввода", font=("Courier", 14), bg="#FFFFFF")
+        input_label.pack(anchor="w", padx=10, pady=5)
 
         self.input_field = tk.Entry(left_frame, width=50)
         self.input_field.insert(0, "Введите текст здесь...")
@@ -55,8 +76,8 @@ class MyMainWindow:
         self.input_field.bind("<FocusOut>", self.on_focusout)
 
         # Окно вывода и количество символов (левая часть)
-        self.output_label = tk.Label(left_frame, text="Окно вывода: принято 0 символов", font=("Courier", 14), bg="#FFFFFF")
-        self.output_label.pack(anchor="w", padx=10, pady=5)
+        output_label = tk.Label(left_frame, text="Окно вывода", font=("Courier", 14), bg="#FFFFFF")
+        output_label.pack(anchor="w", padx=10, pady=5)
 
         self.output_field = tk.Entry(left_frame, width=50, state='readonly')
         self.output_field.pack(anchor="w", padx=10, pady=5)
@@ -179,10 +200,10 @@ class MyMainWindow:
         combo_box['values'] = combo_box['values'][:1]
 
     def set_received_bytes(self, rbytes):
-        self.output_label.config(text=f"Окно вывода: принято {rbytes} байт")
+        self.receive_bytes_label.config(text=f"Принято {rbytes} байт")
 
     def set_transmitted_bytes(self, tbytes):
-        self.input_label.config(text=f"Окно ввода: отправлено {tbytes} байт")
+        self.transmit_bytes_label.config(text=f"Отправлено {tbytes} байт")
 
     def connect_signals(self):
         self.combo_box_first.bind("<<ComboboxSelected>>", lambda e: self.set_transmit_port(self.combo_box_first.get()))
@@ -197,6 +218,7 @@ class MyMainWindow:
 
     def setup_combo_box(self, combo_box, available_ports):
         self.clear_combo_box_except_first(combo_box)
+        available_ports.append("Выберите порт")
         combo_box['values'] = available_ports
         combo_box.current(0)
 
