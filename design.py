@@ -125,14 +125,17 @@ class MyMainWindow:
     def port_chosen(self, port):
         return port != "Выберите порт"
 
+    def set_null_port(self, port, thread):
+        thread.stop()
+        thread = None
+        port = None
+
     def set_transmit_port(self, port):
         self.set_current_combo_box(self.combo_box_first,
                                    self.combo_box_first['values'].index(port))
         
         if self.transmit_port:
-            self.transmit_thread.stop()
-            self.transmit_port = None
-            self.transmit_thread = None
+            self.set_null_port(self.transmit_port, self.transmit_thread)
             
         if self.port_chosen(port):
             self.open_transmit_port(port)
@@ -151,14 +154,12 @@ class MyMainWindow:
 
     def update_receive_ports_list(self):
         available_ports = self.get_available_receive_ports()
-        print(available_ports)
         if not self.receive_port:
             self.setup_combo_box(self.combo_box_second, available_ports)
             if self.transmit_port:
                 self.set_receive_port(available_ports[2])
         elif self.receive_port != available_ports[2]:
-            self.receive_port = None
-            self.receive_thread.stop()
+            self.set_null_port(self.receive_port, self.receive_thread)
             self.setup_combo_box(self.combo_box_second, available_ports)
             self.set_receive_port(available_ports[2])
 
@@ -218,7 +219,6 @@ class MyMainWindow:
 
     def setup_combo_box(self, combo_box, available_ports):
         self.clear_combo_box_except_first(combo_box)
-        available_ports.append("Выберите порт")
         combo_box['values'] = available_ports
         combo_box.current(0)
 
