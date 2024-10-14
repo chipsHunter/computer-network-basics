@@ -3,7 +3,7 @@ import tkinter
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from ports import get_available_ports, PortToWrite, PortToRead
+from ports import get_available_ports, PortToTransmit, PortToReceive
 
 class MyMainWindow:
     def __init__(self, root):
@@ -25,7 +25,7 @@ class MyMainWindow:
 
     def setup_ui(self):
         self.root.title("Коммуникационная программа: топология x -> x+1")
-        self.root.geometry("700x500")
+        self.root.geometry("700x400")
         self.root.configure(bg="#FFFFFF")
         self.root.resizable(width=False, height=False)
 
@@ -37,7 +37,7 @@ class MyMainWindow:
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         right_frame = tk.Frame(top_frame, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
-        right_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # -----ОКНО СОСТОЯНИЯ---------------------------------------------
         status_frame = tk.Frame(self.root, bg="#FFFFFF", bd=2, relief=tk.GROOVE)
@@ -57,7 +57,7 @@ class MyMainWindow:
         self.receive_bytes_label = tk.Label(receive_info, text="Принято 0 байт", font=("Courier", 14), bg="#FFFFFF")
         self.receive_bytes_label.pack(anchor="w", padx=10, pady=5)
 
-        port_info = tk.Label(status_frame, text="Скорость передачи данных: 9600\n8-битный\nЗадержка: 0.5с\n", font=("Courier", 14), bg="#FFFFFF", justify=tkinter.LEFT)
+        port_info = tk.Label(status_frame, text="Скорость передачи данных: 9600\nБит данных: 8\nПаритет: нет\nСтоп-биты: 1", font=("Courier", 14), bg="#FFFFFF", justify=tkinter.LEFT)
         port_info.pack(side=tk.BOTTOM, padx=10, pady=5)
 
         # ------------------------------------------------------------------
@@ -107,6 +107,7 @@ class MyMainWindow:
         #----РАБОТА С ПОРТАМИ----------------------------------------------------------------------------
 
         self.ports = get_available_ports()
+        print(self.ports)
         available_options = self.ports
         available_options.insert(0, "Выберите порт")
         if self.ports:
@@ -165,7 +166,7 @@ class MyMainWindow:
 
     def open_transmit_port(self, port):
         self.transmit_port = port
-        self.transmit_thread = PortToWrite(port, self.set_transmitted_bytes)
+        self.transmit_thread = PortToTransmit(port, self.set_transmitted_bytes)
         self.transmit_thread.start()
 
     def set_receive_port(self, port):
@@ -175,7 +176,7 @@ class MyMainWindow:
             self.receive_thread = None
         if port != "Выберите порт":
             self.receive_port = port
-            self.receive_thread = PortToRead(port, self.display_received_data, self.set_received_bytes)
+            self.receive_thread = PortToReceive(port, self.display_received_data, self.set_received_bytes)
             self.receive_thread.start()
 
         self.combo_box_second.current(self.combo_box_second['values'].index(port))
@@ -197,9 +198,6 @@ class MyMainWindow:
         else:
             self.input_field.config(state="readonly")
 
-    def clear_combo_box_except_first(self, combo_box):
-        combo_box['values'] = combo_box['values'][:1]
-
     def set_received_bytes(self, rbytes):
         self.receive_bytes_label.config(text=f"Принято {rbytes} байт")
 
@@ -218,8 +216,8 @@ class MyMainWindow:
         self.output_field.config(state='readonly')
 
     def setup_combo_box(self, combo_box, available_ports):
-        self.clear_combo_box_except_first(combo_box)
-        combo_box['values'] = available_ports
+        real_list = ["Выберите порт"] + available_ports
+        combo_box['values'] = real_list
         combo_box.current(0)
 
     def on_entry_click(self, event):

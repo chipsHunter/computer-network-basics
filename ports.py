@@ -1,8 +1,8 @@
-import os
+import threading
 import time
 
 import serial.tools.list_ports
-from PyQt5.QtCore import pyqtSignal, QThread
+
 
 def get_available_ports():
     available_ports = []
@@ -19,9 +19,11 @@ def get_available_ports():
 
     return available_ports
 
-class PortToRead(QThread):
 
-    def __init__(self, port, display_data_callback, display_received_bytes_callback):
+class PortToReceive(threading.Thread):
+
+    def __init__(self, port, display_data_callback,
+                 display_received_bytes_callback):
         super().__init__()
         self.port = port
         self._running = False
@@ -40,10 +42,9 @@ class PortToRead(QThread):
 
     def stop(self):
         self._running = False
-        self.exit()
-        self.wait(1)
 
-class PortToWrite(QThread):
+
+class PortToTransmit(threading.Thread):
 
     def __init__(self, port, display_transmitted_bytes):
         super().__init__()
@@ -65,5 +66,3 @@ class PortToWrite(QThread):
 
     def stop(self):
         self._running = False
-        self.exit()
-        self.wait(1)
