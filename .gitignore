@@ -1,0 +1,10 @@
+byte_staffing/.venv
+byte_staffing/.idea
+
+serial_ports/build
+serial_ports/dist
+serial_ports/.idea
+serial_ports/.venv
+serial_ports/__pycache__
+
+osks-lr1-250501.pdf
