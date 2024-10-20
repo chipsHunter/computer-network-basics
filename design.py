@@ -8,6 +8,7 @@ from ports import get_available_ports, PortToTransmit, PortToReceive
 
 class MyMainWindow:
     def __init__(self, root):
+
         self.root = root
         self.transmit_thread = None
         self.receive_thread = None
@@ -17,107 +18,89 @@ class MyMainWindow:
 
         self.transmitted_portions = 0
 
-        self.input_field = None
-        self.output_field = None
+        self.transmitter_field = None
+        self.receiver_field = None
         self.combo_box_first = None
         self.combo_box_second = None
         self.transmitted_portions_label = None
-        self.debug_label = None
+        self.transmitter_scrollbar = None
+        self.receiver_scrollbar = None
 
         self.setup_ui()
 
     def setup_ui(self):
-        self.root.title("Коммуникационная программа: топология x -> x+1")
-        self.root.geometry("700x400")
-        self.root.configure(bg="#FFFFFF")
-        self.root.resizable(width=False, height=False)
 
         FONT = ("Courier", 14)
         SMALL_FONT = ("Courier", 12)
+        BGCOLOR = "#7e9183"
+        FGCOLOR = "#C2ACA9"
 
-        # Создаем фреймы для различных секций
-        top_frame = tk.Frame(self.root, bg="#FFFFFF")
-        top_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
+        self.root.title("Коммуникационная программа: топология x -> x+1")
+        self.root.geometry("840x520")
+        self.root.configure(bg=BGCOLOR)
+        self.root.resizable(width=False, height=False)
 
-        left_frame = tk.Frame(top_frame, bg="#7e9183", bd=2, relief=tk.GROOVE, height=500)
-        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=5, pady=5)
+        input_output_frame = tk.Frame(self.root, bg=BGCOLOR)
+        input_output_frame.grid(row=0, column=0, columnspan=2, padx=15, pady=15)
+        # -------- ОКНО ВВОДА ---------------------------------
 
-        right_frame = tk.Frame(top_frame, bg="#7e9183", bd=2, relief=tk.GROOVE)
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        input_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
+        input_frame.grid(row=0, column=0, padx=10, pady=10)
+        tk.Label(input_frame, text="Окно ввода", bg="#FFFFFF").pack(padx=10, pady=5)
+        self.transmitter_field = tk.Text(input_frame, width=40, height=10)
+        self.transmitter_field.pack(side='left', padx=10, pady=5)
+        self.transmitter_scrollbar = tk.Scrollbar(input_frame, command=self.transmitter_field.yview)
+        self.transmitter_scrollbar.pack(side='right', fill='y', padx=10, pady=10)
+        self.transmitter_field['yscrollcommand'] = self.transmitter_scrollbar.set
+
+        # ----- ОКНО ВЫВОДА -------------------------------------------------
+        output_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
+        output_frame.grid(row=0, column=1, padx=10, pady=10)
+        tk.Label(output_frame, text="Окно вывода", bg="#FFFFFF").pack(padx=10, pady=5)
+        self.receiver_field = tk.Text(output_frame, width=40, height=10)
+        self.receiver_field.pack(side='left', padx=10, pady=5)
+        self.receiver_scrollbar = tk.Scrollbar(output_frame, command=self.receiver_field.yview)
+        self.receiver_scrollbar.pack(side='right', fill='y', padx=10, pady=10)
+        self.receiver_field['yscrollcommand'] = self.receiver_scrollbar.set
+
+        # ------- ОКНО УПРАВЛЕНИЯ ------------------------------------------------------
+
+        control_frame = tk.Frame(self.root, bg=FGCOLOR, bd=2, relief=tk.GROOVE)
+        control_frame.grid(row=1, column=0, sticky='nw', padx=25, pady=25)
+
+        # Окно управления (правая часть)
+        control_label = tk.Label(control_frame, text="Окно управления", font=FONT, bg="#FFFFFF")
+        control_label.pack(anchor="w", padx=10, pady=5)
+
+        # Комбо-бокс для отправителя
+        transmit_label = tk.Label(control_frame, text="Отправитель", font=SMALL_FONT, bg="#FFFFFF")
+        transmit_label.pack(anchor="w", padx=10, pady=5)
+
+        self.combo_box_first = ttk.Combobox(control_frame, font=SMALL_FONT)
+        self.combo_box_first.pack(anchor="w", padx=10, pady=5)
+
+        # Комбо-бокс для получателя
+        receive_label = tk.Label(control_frame, text="Получатель", font=SMALL_FONT, bg="#FFFFFF")
+        receive_label.pack(anchor="w", padx=10, pady=5)
+
+        self.combo_box_second = ttk.Combobox(control_frame, font=("Courier", 12))
+        self.combo_box_second.pack(anchor="w", padx=10, pady=5)
 
         # -----ОКНО СОСТОЯНИЯ---------------------------------------------
-        status_frame = tk.Frame(self.root, bg="#7e9183", bd=2, relief=tk.GROOVE, height=100)
-        status_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=10, pady=10)
+        status_frame = tk.Frame(self.root, bg=FGCOLOR, bd=2, relief=tk.GROOVE)
+        status_frame.grid(row=1, column=1, sticky='ne', padx=25, pady=25)
 
         status_label = tk.Label(status_frame, text="Окно состояния", font=FONT, bg="#FFFFFF")
-        status_label.pack(anchor="w", padx=10, pady=10)
+        status_label.pack(anchor="w", padx=15, pady=15)
 
         port_info = tk.Label(status_frame,
                              text="Скорость передачи данных: 9600\nБит данных: 8\nПаритет: нет\nСтоп-биты: 1",
                              font=SMALL_FONT, bg="#FFFFFF", justify=tkinter.LEFT)
-        port_info.pack(side=tk.BOTTOM, anchor="nw", padx=50, pady=5)
+        port_info.pack(side=tk.BOTTOM, anchor="nw", padx=50, pady=10)
 
         self.transmitted_portions_label = tk.Label(status_frame, text=f"Передано порций: {self.transmitted_portions}",
                                                    font=SMALL_FONT, bg="#FFFFFF", justify=tkinter.LEFT)
         self.transmitted_portions_label.pack(side=tk.BOTTOM, anchor="nw", padx=50, pady=5)
-
-        # ------ ОТЛАДОЧНОЕ ОКНО ------------------------------------------
-
-        debug_frame = tk.Frame(self.root, bg="#7e9183", bd=2, relief=tk.GROOVE)
-        debug_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=10, pady=10)  # Новый фрейм справа от остальных
-
-        debug_label = tk.Label(debug_frame, text="Отладочное окно", font=FONT, bg="#FFFFFF")
-        debug_label.pack(anchor="w", padx=10, pady=10)
-
-        self.debug_label = tk.Label(debug_frame, text="", font=SMALL_FONT, bg="#FFFFFF", fg="red", width=100, height=100, justify=tkinter.LEFT)  # Лейбл для ошибок
-        self.debug_label.pack(side=tk.TOP, anchor="nw", padx=10, pady=5)
-
-        #-------------------------------------------------------------------
-
-        # Окно ввода (левая часть)
-        input_label = tk.Label(left_frame, text="Окно ввода", font=FONT, bg="#FFFFFF")
-        input_label.pack(anchor="w", padx=10, pady=5)
-
-        self.input_field = tk.Entry(left_frame, width=50)
-        self.input_field.insert(0, "Введите текст здесь...")
-        self.input_field.config(fg="grey")  # Сначала текст серый
-        self.input_field.pack(anchor="w", padx=10, pady=5)
-
-        # Привязываем события к полю ввода
-        self.input_field.bind("<FocusIn>", self.on_entry_click)
-        self.input_field.bind("<FocusOut>", self.on_focusout)
-
-        # Окно вывода и количество символов (левая часть)
-        output_label = tk.Label(left_frame, text="Окно вывода", font=FONT, bg="#FFFFFF")
-        output_label.pack(anchor="w", padx=10, pady=5)
-
-        self.output_field = tk.Entry(left_frame, width=50, bg="#FFFFFF")
-        self.output_field.pack(side="top", padx=10, pady=5)
-
-        # Создаём горизонтальную прокрутку
-        h_scrollbar = tk.Scrollbar(left_frame, orient="horizontal", command=self.output_field.xview)
-        h_scrollbar.pack(side="bottom", fill="x")
-
-        # Связываем прокрутку с Entry
-        self.output_field.config(xscrollcommand=h_scrollbar.set)
-
-        # Окно управления (правая часть)
-        control_label = tk.Label(right_frame, text="Окно управления", font=FONT, bg="#FFFFFF")
-        control_label.pack(anchor="w", padx=10, pady=5)
-
-        # Комбо-бокс для отправителя
-        transmit_label = tk.Label(right_frame, text="Отправитель", font=SMALL_FONT, bg="#FFFFFF")
-        transmit_label.pack(anchor="w", padx=10, pady=5)
-
-        self.combo_box_first = ttk.Combobox(right_frame, font=SMALL_FONT)
-        self.combo_box_first.pack(anchor="w", padx=10, pady=5)
-
-        # Комбо-бокс для получателя
-        receive_label = tk.Label(right_frame, text="Получатель", font=SMALL_FONT, bg="#FFFFFF")
-        receive_label.pack(anchor="w", padx=10, pady=5)
-
-        self.combo_box_second = ttk.Combobox(right_frame, font=("Courier", 12))
-        self.combo_box_second.pack(anchor="w", padx=10, pady=5)
 
         # ------ РАБОТА С ПОРТАМИ ----------------------------------------------------------------------------
 
@@ -155,7 +138,7 @@ class MyMainWindow:
         if self.port_chosen(port):
             self.open_transmit_port(port)
 
-        self.lock_input_if_transmit_port_not_chosen()
+        self.lock_transmitter_if_transmit_port_not_chosen()
 
         self.update_receive_ports_list()
 
@@ -193,8 +176,8 @@ class MyMainWindow:
         self.combo_box_second.current(self.combo_box_second['values'].index(port))
 
     def send_data(self):
-        message = self.input_field.get().strip()
-        self.input_field.delete(0, tk.END)
+        message = self.transmitter_field.get().strip()
+        self.transmitter_field.delete(0, tk.END)
         if self.transmit_thread:
             self.transmit_thread.write(message)
 
@@ -225,7 +208,10 @@ class MyMainWindow:
         self.combo_box_first.bind("<Button-1>", lambda e: self.check_combo_box(self.combo_box_first,
                                                                                self.transmit_port,
                                                                                self.transmit_thread,
-                                                                               [port for port in (get_available_ports() + [self.transmit_port]) if port is not None]
+                                                                               [port for port in (
+                                                                                           get_available_ports() + [
+                                                                                       self.transmit_port]) if
+                                                                                port is not None]
                                                                                )
                                   )
         self.combo_box_second.bind("<Button-1>", lambda e: self.check_combo_box(self.combo_box_second,
@@ -236,13 +222,13 @@ class MyMainWindow:
                                    )
         self.combo_box_first.bind("<<ComboboxSelected>>", lambda e: self.set_transmit_port(self.combo_box_first.get()))
         self.combo_box_second.bind("<<ComboboxSelected>>", lambda e: self.set_receive_port(self.combo_box_second.get()))
-        self.input_field.bind("<Return>", lambda e: self.send_data())
+        self.transmitter_field.bind("<Return>", lambda e: self.send_data())
 
     def display_received_data(self, data):
-        self.output_field.config(state='normal')  # Разрешаем редактирование
-        self.output_field.insert(tk.END, data + "\n")  # Вставляем текст
-        # self.output_field.config(state='disabled')  # Возвращаем в режим "только для чтения"
-        self.output_field.yview(tk.END)
+        self.receiver_field.config(state='normal')  # Разрешаем редактирование
+        self.receiver_field.insert(tk.END, data + "\n")  # Вставляем текст
+        # self.receiver_field.config(state='disabled')  # Возвращаем в режим "только для чтения"
+        self.receiver_field.yview(tk.END)
 
     def setup_combo_box(self, combo_box, available_ports):
         real_list = ["Выберите порт"] + available_ports
@@ -266,20 +252,20 @@ class MyMainWindow:
     # ------ ПОЛЕ ВВОДА ------------------
 
     def on_entry_click(self, event):
-        if self.input_field.get() == "Введите текст здесь...":
-            self.input_field.delete(0, tk.END)
-            self.input_field.config(fg="black")
+        if self.transmitter_field.get() == "Введите текст здесь...":
+            self.transmitter_field.delete(0, tk.END)
+            self.transmitter_field.config(fg="black")
 
     def on_focusout(self, event):
-        if self.input_field.get() == "":
-            self.input_field.insert(0, "Введите текст здесь...")
-            self.input_field.config(fg="grey")
+        if self.transmitter_field.get() == "":
+            self.transmitter_field.insert(0, "Введите текст здесь...")
+            self.transmitter_field.config(fg="grey")
 
-    def lock_input_if_transmit_port_not_chosen(self):
+    def lock_transmitter_if_transmit_port_not_chosen(self):
         if self.transmit_port:
-            self.input_field.config(state="normal")
+            self.transmitter_field.config(state="normal")
         else:
-            self.input_field.config(state="readonly")
+            self.transmitter_field.config(state="disabled")
 
     # ------- ВЫХОД --------------------------------------------------------------
 
