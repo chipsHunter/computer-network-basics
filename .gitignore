@@ -1,6 +1,10 @@
 
 byte_staffing/.venv
 byte_staffing/.idea
+byte_staffing/dist
+byte_staffing/build
+byte_staffing/__pycache__
+byte_staffing/main.spec
 
 serial_ports/build
 serial_ports/dist
