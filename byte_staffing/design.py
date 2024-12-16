@@ -9,6 +9,11 @@ from tkinter.constants import BOTTOM
 from package import PackageManager, Package, get_data_from_package
 from ports import get_available_ports, PortToTransmit, PortToReceive
 
+FONT = ("Courier", 14)
+SMALL_FONT = ("Courier", 12)
+BGCOLOR = "#7e9183"
+FGCOLOR = "#C2ACA9"
+
 
 class MyMainWindow:
     def __init__(self, root):
@@ -33,17 +38,18 @@ class MyMainWindow:
         self.receiver_scrollbar = None
         self.packages = None
 
+        self.package_frame = None
+        self.input_frame = None
+        self.output_frame = None
+        self.control_frame = None
+        self.text_frame = None
+
         self.setup_ui()
 
     def setup_ui(self):
 
-        FONT = ("Courier", 14)
-        SMALL_FONT = ("Courier", 12)
-        BGCOLOR = "#7e9183"
-        FGCOLOR = "#C2ACA9"
-
         self.root.title("Коммуникационная программа: топология x -> x+1")
-        self.root.geometry("950x570")
+        self.root.geometry("950x590")
         self.root.configure(bg=BGCOLOR)
         self.root.resizable(width=False, height=False)
 
@@ -51,24 +57,12 @@ class MyMainWindow:
         input_output_frame.grid(row=0, column=0, columnspan=2, padx=15, pady=15, sticky="nsew")
 
         # -------- ОКНО ВВОДА ---------------------------------
-        input_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
-        input_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
-        tk.Label(input_frame, text="Окно ввода", bg="#FFFFFF").pack(padx=10, pady=5)
-        self.transmitter_field = tk.Text(input_frame, width=40, height=10)
-        self.transmitter_field.pack(side='left', padx=10, pady=5, fill="both", expand=True)
-        self.transmitter_scrollbar = tk.Scrollbar(input_frame, command=self.transmitter_field.yview)
-        self.transmitter_scrollbar.pack(side='right', fill='y')
-        self.transmitter_field['yscrollcommand'] = self.transmitter_scrollbar.set
+        self.input_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
+        self.config_input_window()
 
         # ----- ОКНО ВЫВОДА -------------------------------------------------
-        output_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
-        output_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
-        tk.Label(output_frame, text="Окно вывода", bg="#FFFFFF").pack(padx=10, pady=5)
-        self.receiver_field = tk.Text(output_frame, width=40, height=10)
-        self.receiver_field.pack(side='left', padx=10, pady=5, fill="both", expand=True)
-        self.receiver_scrollbar = tk.Scrollbar(output_frame, command=self.receiver_field.yview)
-        self.receiver_scrollbar.pack(side='right', fill='y')
-        self.receiver_field['yscrollcommand'] = self.receiver_scrollbar.set
+        self.output_frame = tk.Frame(input_output_frame, bd=2, relief='groove', bg=FGCOLOR)
+        self.config_output_window()
 
         # Настройки для равномерного распределения окна ввода и вывода
         input_output_frame.grid_columnconfigure(0, weight=1)
@@ -76,60 +70,18 @@ class MyMainWindow:
         input_output_frame.grid_rowconfigure(0, weight=1)
 
         # ------- ОКНО УПРАВЛЕНИЯ ------------------------------------------------------
-        control_frame = tk.Frame(self.root, bg=FGCOLOR, bd=2, relief=tk.GROOVE)
-        control_frame.grid(row=1, column=0, padx=25, pady=25, sticky="nsew")
-
-        # Окно управления
-        control_label = tk.Label(control_frame, text="Окно управления", font=FONT, bg="#FFFFFF")
-        control_label.pack(anchor="w", padx=10, pady=5)
-
-        # Комбо-боксы для отправителя и получателя
-        transmit_label = tk.Label(control_frame, text="Отправитель", font=SMALL_FONT, bg="#FFFFFF")
-        transmit_label.pack(anchor="w", padx=10, pady=5)
-
-        self.combo_box_first = ttk.Combobox(control_frame, font=SMALL_FONT)
-        self.combo_box_first.pack(anchor="w", padx=10, pady=5)
-
-        receive_label = tk.Label(control_frame, text="Получатель", font=SMALL_FONT, bg="#FFFFFF")
-        receive_label.pack(anchor="w", padx=10, pady=5)
-
-        self.combo_box_second = ttk.Combobox(control_frame, font=SMALL_FONT)
-        self.combo_box_second.pack(anchor="w", padx=10, pady=5)
+        self.control_frame = tk.Frame(self.root, bg=FGCOLOR, bd=2, relief=tk.GROOVE)
+        self.config_control_frame()
 
         # -----ОКНО СОСТОЯНИЯ---------------------------------------------
         status_frame = tk.Frame(self.root, bg=FGCOLOR, bd=2, relief=tk.GROOVE)
         status_frame.grid(row=1, column=1, padx=25, pady=25, sticky="nsew")
 
-        # Левая часть с информацией о портах и переданными порциями
-        text_frame = tk.Frame(status_frame, bg=FGCOLOR)
-        text_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=5, pady=10)
+        self.text_frame = tk.Frame(status_frame, bg=FGCOLOR)
+        self.config_text_window()
 
-        status_label = tk.Label(text_frame, text="Окно состояния", font=FONT, bg="#FFFFFF")
-        status_label.pack(side=tk.TOP, anchor="w", padx=15, pady=10)
-
-        port_info = tk.Label(text_frame,
-                             text="Скорость передачи данных: 9600\nБит данных: 8\nПаритет: нет\nСтоп-биты: 1",
-                             font=SMALL_FONT, bg="#FFFFFF", justify=tk.LEFT)
-        port_info.pack(side=tk.TOP, anchor="nw", padx=15, pady=10)
-
-        self.transmitted_portions_label = tk.Label(text_frame, text=f"Передано порций: {self.transmitted_portions}",
-                                                   font=SMALL_FONT, bg="#FFFFFF", justify=tk.LEFT)
-        self.transmitted_portions_label.pack(side=tk.TOP, anchor="nw", padx=15, pady=5)
-
-        # Правая часть со структурой кадра и прокруткой
-        package_frame = tk.Frame(status_frame, bg=FGCOLOR)
-        package_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=5, pady=10, expand=True)
-
-        package_label = tk.Label(package_frame, text="Структура кадра", font=SMALL_FONT, bg="#FFFFFF")
-        package_label.pack(side=tk.TOP, anchor="w", padx=10, pady=10)
-
-        # Текстовое поле для структуры кадра и скроллбар
-        self.packages = tk.Text(package_frame, width=30, height=10)
-        self.packages.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
-
-        package_scrollbar = tk.Scrollbar(package_frame, command=self.packages.yview)
-        package_scrollbar.pack(side=tk.RIGHT, fill="y")
-        self.packages['yscrollcommand'] = package_scrollbar.set
+        self.package_frame = tk.Frame(status_frame, bg=FGCOLOR)
+        self.config_package_window()
 
         # Настройки grid для равномерного распределения пространства между окнами
         self.root.grid_rowconfigure(0, weight=1)
@@ -138,7 +90,10 @@ class MyMainWindow:
         self.root.grid_columnconfigure(1, weight=1)
 
         # ------ РАБОТА С ПОРТАМИ ----------------------------------------------------------------------------
+        self.init_ports()
 
+
+    def init_ports(self):
         self.ports = get_available_ports()
         available_options = self.ports
         available_options.insert(0, "Выберите порт")
@@ -154,6 +109,75 @@ class MyMainWindow:
             messagebox.showerror("Error", "No available ports.")
 
         self.connect_signals()
+
+
+    def config_package_window(self):
+        self.package_frame.pack(side=tk.RIGHT, fill=tk.BOTH, padx=5, pady=10, expand=True)
+
+        package_label = tk.Label(self.package_frame, text="Структура кадра", font=SMALL_FONT, bg="#FFFFFF")
+        package_label.pack(side=tk.TOP, anchor="w", padx=5, pady=10)
+
+        # Текстовое поле для структуры кадра и скроллбар
+        self.packages = tk.Text(self.package_frame, width=30, height=10)
+        self.packages.pack(side=tk.LEFT, padx=10, pady=10, fill=tk.BOTH, expand=True)
+
+        package_scrollbar = tk.Scrollbar(self.package_frame, command=self.packages.yview)
+        package_scrollbar.pack(side=tk.RIGHT, fill="y")
+        self.packages['yscrollcommand'] = package_scrollbar.set
+
+    def config_text_window(self):
+        self.text_frame.pack(side=tk.LEFT, fill=tk.BOTH, padx=5, pady=10)
+
+        status_label = tk.Label(self.text_frame, text="Окно состояния", font=FONT, bg="#FFFFFF")
+        status_label.pack(side=tk.TOP, anchor="w", padx=5, pady=10)
+
+        port_info = tk.Label(self.text_frame,
+                             text="Скорость передачи данных: 9600\nБит данных: 8\nПаритет: нет\nСтоп-биты: 1",
+                             font=SMALL_FONT, bg="#FFFFFF", justify=tk.LEFT)
+        port_info.pack(side=tk.TOP, anchor="nw", padx=15, pady=10)
+
+        self.transmitted_portions_label = tk.Label(self.text_frame,
+                                                   text=f"Передано порций: {self.transmitted_portions}",
+                                                   font=SMALL_FONT, bg="#FFFFFF", justify=tk.LEFT)
+        self.transmitted_portions_label.pack(side=tk.TOP, anchor="nw", padx=15, pady=5)
+
+    def config_control_frame(self):
+        self.control_frame.grid(row=1, column=0, padx=5, pady=25, sticky="nsew")
+
+        # Окно управления
+        control_label = tk.Label(self.control_frame, text="Окно управления", font=FONT, bg="#FFFFFF")
+        control_label.pack(anchor="w", padx=10, pady=5)
+
+        # Комбо-боксы для отправителя и получателя
+        transmit_label = tk.Label(self.control_frame, text="Отправитель", font=SMALL_FONT, bg="#FFFFFF")
+        transmit_label.pack(anchor="w", padx=10, pady=5)
+
+        self.combo_box_first = ttk.Combobox(self.control_frame, font=SMALL_FONT)
+        self.combo_box_first.pack(anchor="w", padx=10, pady=5)
+
+        receive_label = tk.Label(self.control_frame, text="Получатель", font=SMALL_FONT, bg="#FFFFFF")
+        receive_label.pack(anchor="w", padx=10, pady=5)
+
+        self.combo_box_second = ttk.Combobox(self.control_frame, font=SMALL_FONT)
+        self.combo_box_second.pack(anchor="w", padx=10, pady=5)
+
+    def config_output_window(self):
+        self.output_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        tk.Label(self.output_frame, text="Окно вывода", bg="#FFFFFF").pack(padx=10, pady=5)
+        self.receiver_field = tk.Text(self.output_frame, width=40, height=10)
+        self.receiver_field.pack(side='left', padx=10, pady=5, fill="both", expand=True)
+        self.receiver_scrollbar = tk.Scrollbar(self.output_frame, command=self.receiver_field.yview)
+        self.receiver_scrollbar.pack(side='right', fill='y')
+        self.receiver_field['yscrollcommand'] = self.receiver_scrollbar.set
+
+    def config_input_window(self):
+        self.input_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        tk.Label(self.input_frame, text="Окно ввода", bg="#FFFFFF").pack(padx=10, pady=5)
+        self.transmitter_field = tk.Text(self.input_frame, width=40, height=10)
+        self.transmitter_field.pack(side='left', padx=10, pady=5, fill="both", expand=True)
+        self.transmitter_scrollbar = tk.Scrollbar(self.input_frame, command=self.transmitter_field.yview)
+        self.transmitter_scrollbar.pack(side='right', fill='y')
+        self.transmitter_field['yscrollcommand'] = self.transmitter_scrollbar.set
 
     def port_chosen(self, port):
         return port != "Выберите порт"
@@ -205,7 +229,7 @@ class MyMainWindow:
             self.receive_thread = None
         if port != "Выберите порт":
             self.receive_port = port
-            self.receive_thread = PortToReceive(port, self.display_received_data, self.handle_port_error)
+            self.receive_thread = PortToReceive(port, self.display_received_data, self.handle_port_error, self.start_receive)
             self.receive_thread.start()
 
         self.combo_box_second.current(self.combo_box_second['values'].index(port))
@@ -253,6 +277,9 @@ class MyMainWindow:
                                  )
             self.set_current_combo_box(self.combo_box_first, 0)
 
+    def start_receive(self):
+        self.receiver_field.insert("/n")
+
     # ------ КОМБО БОКСЫ ----------------------------------------------------------------------
 
     def connect_signals(self):
@@ -281,9 +308,7 @@ class MyMainWindow:
         data = self.read_from_package(package)
         print(f"READ DATA : {data}")
         self.received_data += data
-        # self.receiver_field.delete(1.0, tk.END)
-        self.receiver_field.insert(tk.END, data)  # Вставляем текст
-        # self.receiver_field.config(state='disabled')  # Возвращаем в режим "только для чтения"
+        self.receiver_field.insert(tk.END, data)
         self.receiver_field.yview(tk.END)
 
     def print_package(self, package):
@@ -312,6 +337,8 @@ class MyMainWindow:
 
         # Настраиваем жирный шрифт
         self.packages.tag_configure('bold', font=("Courier", 12, "bold"))
+
+
 
         self.packages.config(state=tk.DISABLED)
 

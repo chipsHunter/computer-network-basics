@@ -22,12 +22,13 @@ def get_available_ports():
 
 class PortToReceive(threading.Thread):
 
-    def __init__(self, port, display_data_callback, handler):
+    def __init__(self, port, display_data_callback, handler, start_receive):
         super().__init__()
         self.port = port
         self._running = False
         self.data_callback = display_data_callback
         self.handle_port_error = handler
+        self.start = start_receive
 
     def run(self):
         self._running = True
